@@ -1,0 +1,183 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@theme {
+  --font-sans: "Noto Sans SC", "WenQuanYi Zen Hei", "PingFang SC", "Hiragino Sans GB",
+    "Source Han Sans SC", system-ui, sans-serif;
+  --font-display: "Noto Serif SC", "Songti SC", "Noto Serif CJK SC", "WenQuanYi Zen Hei",
+    serif;
+  --font-mono: ui-monospace, "SF Mono", "WenQuanYi Zen Hei Mono", Menlo, Consolas,
+    monospace;
+
+  --color-background: #f1efe8;
+  --color-foreground: #1b1c1e;
+  --color-card: #faf9f5;
+  --color-card-foreground: #1b1c1e;
+  --color-muted: #e6e3da;
+  --color-muted-foreground: #6e7176;
+  --color-primary: #3d4a57;
+  --color-primary-foreground: #f7f4ee;
+  --color-secondary: #ece9e1;
+  --color-secondary-foreground: #1b1c1e;
+  --color-accent: #e4e0d6;
+  --color-accent-foreground: #1b1c1e;
+  --color-border: #d4d0c6;
+  --color-ring: #3d4a57;
+  --color-destructive: #9b3d32;
+  --color-destructive-foreground: #f7f4ee;
+  --color-pass: #3f6b58;
+  --color-fail: #9b3d32;
+  --color-run: #3d5c6e;
+  --color-queue: #6e7176;
+  --color-timeout: #8a5a2b;
+
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius: 12px;
+
+  --shadow-border:
+    0 0 0 1px color-mix(in oklab, var(--color-foreground) 8%, transparent),
+    0 1px 2px -1px color-mix(in oklab, var(--color-foreground) 6%, transparent),
+    0 2px 8px -2px color-mix(in oklab, var(--color-foreground) 5%, transparent);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  html,
+  body,
+  #app {
+    min-height: 100dvh;
+  }
+
+  body {
+    background: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+}
+
+@layer components {
+  .board-table {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  .board-table th,
+  .board-table td {
+    border-bottom: 1px solid var(--color-border);
+    vertical-align: middle;
+  }
+
+  .board-col-name {
+    width: 22rem;
+  }
+
+  .board-col-stage {
+    width: auto;
+  }
+
+  .board-name {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    width: 22rem;
+    min-width: 18rem;
+    max-width: 22rem;
+    background: var(--color-card);
+    text-align: left;
+    font-weight: 500;
+    box-shadow: 1px 0 0 var(--color-border);
+  }
+
+  .board-head {
+    background: var(--color-card);
+  }
+
+  thead .board-name {
+    z-index: 2;
+  }
+
+  .board-group {
+    padding: 10px 8px 4px;
+    text-align: center;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+
+  .board-sub {
+    padding: 4px 6px 10px;
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--color-muted-foreground);
+    white-space: nowrap;
+  }
+
+  .board-cell {
+    padding: 0;
+  }
+
+  .lane-pre {
+    background: color-mix(in oklab, var(--color-card) 88%, var(--color-run) 12%);
+  }
+
+  .lane-post {
+    background: color-mix(in oklab, var(--color-card) 88%, var(--color-pass) 12%);
+  }
+
+  .lane-split {
+    box-shadow: inset 1px 0 0 var(--color-border);
+  }
+
+  .board-row:hover .board-name,
+  .board-row:hover .board-cell {
+    background: color-mix(in oklab, var(--color-accent) 55%, var(--color-card));
+  }
+
+  .board-row:hover .lane-pre {
+    background: color-mix(in oklab, var(--color-accent) 40%, var(--color-run) 10%);
+  }
+
+  .board-row:hover .lane-post {
+    background: color-mix(in oklab, var(--color-accent) 40%, var(--color-pass) 10%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
