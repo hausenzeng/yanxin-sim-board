@@ -20,9 +20,10 @@
  * `process.env`, which is why the merge has to happen before Vite starts.
  */
 import { spawn } from "node:child_process";
-import { readFileSync, realpathSync } from "node:fs";
+import { existsSync, readFileSync, realpathSync } from "node:fs";
+import { createRequire } from "node:module";
 import { constants as osConstants } from "node:os";
-import { dirname, join } from "node:path";
+import { dirname, join, delimiter } from "node:path";
 import { fileURLToPath } from "node:url";
 
 export const APP_ENV_REL_PATH = ".grok/app-env.json";
@@ -104,14 +105,58 @@ export function isMainModule(moduleUrl) {
   }
 }
 
+function prependLocalBin(env, root) {
+  const bin = join(root, "node_modules", ".bin");
+  return { ...env, PATH: `${bin}${delimiter}${env.PATH ?? ""}` };
+}
+
+/**
+ * Resolve `vite` (and other package bins) to `node path/to/bin.js`.
+ * Bare `spawn("vite")` fails on Windows: npm's shim is `vite.cmd`, which
+ * Node cannot exec without a shell.
+ */
+export function resolveSpawn(command, args, root = projectRoot()) {
+  if (existsSync(command) || command.includes("/") || command.includes("\\")) {
+    return { file: command, argv: args, shell: false };
+  }
+  try {
+    const require = createRequire(join(root, "package.json"));
+    const pkgPath = require.resolve(`${command}/package.json`);
+    const pkg = JSON.parse(readFileSync(pkgPath, "utf8"));
+    const binField = pkg.bin;
+    const rel = typeof binField === "string" ? binField : binField?.[command];
+    if (rel) {
+      return {
+        file: process.execPath,
+        argv: [join(dirname(pkgPath), rel), ...args],
+        shell: false,
+      };
+    }
+  } catch {
+    // not a local package bin
+  }
+  const shim = join(
+    root,
+    "node_modules",
+    ".bin",
+    process.platform === "win32" ? `${command}.cmd` : command,
+  );
+  if (existsSync(shim)) {
+    return { file: shim, argv: args, shell: process.platform === "win32" };
+  }
+  return { file: command, argv: args, shell: process.platform === "win32" };
+}
+
 function main(argv) {
   const [command, ...args] = argv;
   if (!command) {
     console.error("usage: node scripts/with-app-env.mjs <command> [args…]");
     process.exit(2);
   }
-  const env = mergeAppEnv(readAppEnv(projectRoot()), process.env);
-  const child = spawn(command, args, { stdio: "inherit", env });
+  const root = projectRoot();
+  const env = prependLocalBin(mergeAppEnv(readAppEnv(root), process.env), root);
+  const { file, argv: childArgs, shell } = resolveSpawn(command, args, root);
+  const child = spawn(file, childArgs, { stdio: "inherit", env, shell });
   // The dev server is long-running and is stopped by signalling this wrapper.
   for (const signal of ["SIGINT", "SIGTERM", "SIGHUP"]) {
     process.on(signal, () => child.kill(signal));
